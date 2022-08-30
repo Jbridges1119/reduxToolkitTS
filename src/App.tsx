@@ -1,21 +1,26 @@
-import { useState } from 'react';
-import { useQuery } from 'react-query';
-// Types
-import { BitcoinData, Currencies } from './bitcoinTypes';
-// Styles
-// import { Wrapper } from './App.styles';
 
-const getBCData = async (): Promise<BitcoinData> => await (await fetch('https://blockchain.info/ticker')).json();
+// Types
+import { BitcoinData } from './bitcoinTypes';
+//Hooks
+import { useAppDispatch, useAppSelector } from './reduxHooks';
+//Actions
+import { changeCurrency } from './features/appSlice';
+import { useGetBitcoinDataQuery } from './services/app';
+
 
 const INTERVAL_TIME = 5000; // ms
 
 const App = () => {
-  const [currency, setCurrency] = useState<Currencies>(Currencies.USD);
-  const { data, isLoading, error } = useQuery<BitcoinData>('bc-data', getBCData, {
-    refetchInterval: INTERVAL_TIME
-  });
+  //Destructed from appSlice
+  const { currency} = useAppSelector(state => state.app)
+  //Assign our action invoker to a variable
+  const dispatch = useAppDispatch()
 
-  const handleCurrencySelection = (e: any) => setCurrency(e.currentTarget.value);
+  const { data, isLoading, error } = useGetBitcoinDataQuery(undefined, {
+    pollingInterval: INTERVAL_TIME
+  });
+  //use our action invoker 
+  const HandleCurrencySelection = (e: any) => dispatch(changeCurrency(e.currentTarget.value));
 
   if (isLoading) return <div>Loading ...</div>;
   if (error) return <div>Something went horrible wrong ...</div>;
@@ -24,7 +29,7 @@ const App = () => {
     
       <>
         <h2>Bitcoin Price</h2>
-        <select value={currency} onChange={handleCurrencySelection}>
+        <select value={currency} onChange={HandleCurrencySelection}>
           {data &&
             Object.keys(data).map(currency => (
               <option key={currency} value={currency}>
